@@ -20,7 +20,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y g++-mingw-w64-x86-64 autoconf automake libtool pkg-config make git bsdmainutils
           sudo apt-get install -y build-essential libboost-all-dev libssl-dev libdb-dev libdb++-dev
-          sudo apt-get install -y qtbase5-dev qttools5-dev-tools
+          sudo apt-get install -y qtbase5-dev qttools5-dev-tools wget
 
       - name: Setup cross-compile environment
         run: |
@@ -28,16 +28,30 @@ jobs:
           export CXX=x86_64-w64-mingw32-g++
           export PATH=$PREFIX/bin:$PATH
 
+      - name: Build Berkeley DB for Windows
+        run: |
+          mkdir -p depends/db_cxx
+          cd depends/db_cxx
+          wget -q http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz
+          tar -xf db-4.8.30.NC.tar.gz
+          cd db-4.8.30.NC/build_unix
+          ../dist/configure --enable-cxx --disable-shared --with-pic --host=x86_64-w64-mingw32 --prefix=$PREFIX
+          make -j$(nproc)
+          make install
+          cd ../../../..
+
       - name: Build depends
         run: |
-          PATH=$(echo "$PATH" | sed -e 's/:\/mnt.*//g')
+          cd depends
+          make HOST=x86_64-w64-mingw32 -j$(nproc)
+          cd ..
 
       - name: Autogen
         run: ./autogen.sh
 
-      - name: Configure
+      - name: Configure Crionic Core
         run: |
-          ./configure --disable-bench --disable-tests --disable-zmq \
+          ./configure --disable-bench --disable-tests --disable-gui-tests --disable-zmq \
                       --prefix=$PREFIX \
                       --host=x86_64-w64-mingw32 \
                       CC=x86_64-w64-mingw32-gcc \
