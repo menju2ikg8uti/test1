@@ -20,9 +20,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y g++-mingw-w64-x86-64 autoconf automake libtool pkg-config make git
           sudo apt-get install -y build-essential libboost-all-dev libssl-dev libdb-dev libdb++-dev
-          # Optional: Qt5 cross compile dependencies if GUI needed
-          sudo apt-get install -y qtbase5-dev qttools5-dev qttools5-dev-tools
-
+          sudo apt-get install -y qtbase5-dev qttools5-dev-tools
 
       - name: Setup cross-compile environment
         run: |
@@ -36,14 +34,16 @@ jobs:
           make HOST=x86_64-w64-mingw32 -j$(nproc)
           cd ..
 
-      - name: Autogen & configure
+      - name: Autogen
+        run: ./autogen.sh
+
+      - name: Configure
         run: |
-          ./autogen.sh
           ./configure --disable-bench --disable-tests --disable-gui-tests --disable-zmq \
                       --prefix=$PREFIX \
                       CC=x86_64-w64-mingw32-gcc \
                       CXX=x86_64-w64-mingw32-g++
-      
+
       - name: Build Crionic Core
         run: |
           make -j$(nproc)
