@@ -22,15 +22,15 @@ jobs:
 
       - name: Setup cross-compile environment
         run: |
-          #export CC=x86_64-w64-mingw32-gcc
-          #export CXX=x86_64-w64-mingw32-g++
-          #export PATH=$PREFIX/bin:$PATH
-          echo done
+          export CC=x86_64-w64-mingw32-gcc
+          export CXX=x86_64-w64-mingw32-g++
+          export PATH=$PREFIX/bin:$PATH
+
       - name: Build depends
         run: |
           PATH=$(echo "$PATH" | sed -e 's/:\/mnt.*//g')
           cd depends
-          make HOST=x86_64-w64-mingw32 -j$(nproc)
+          # make HOST=x86_64-w64-mingw32 -j$(nproc)
           cd ..
 
       - name: Autogen
