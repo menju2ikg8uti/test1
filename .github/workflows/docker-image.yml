@@ -18,9 +18,9 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y g++-mingw-w64-x86-64 autoconf automake libtool pkg-config make git bsdmainutils
+          sudo apt-get install -y g++-mingw-w64-x86-64 autoconf automake libtool pkg-config make git bsdmainutils wget patch
           sudo apt-get install -y build-essential libboost-all-dev libssl-dev libdb-dev libdb++-dev
-          sudo apt-get install -y qtbase5-dev qttools5-dev-tools wget
+          sudo apt-get install -y qtbase5-dev qttools5-dev-tools
 
       - name: Setup cross-compile environment
         run: |
@@ -28,15 +28,17 @@ jobs:
           export CXX=x86_64-w64-mingw32-g++
           export PATH=$PREFIX/bin:$PATH
 
-      - name: Build Berkeley DB for Windows
+      - name: Build patched Berkeley DB 4.8
         run: |
           mkdir -p depends/db_cxx
           cd depends/db_cxx
-          wget -q http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz
+          wget -q https://github.com/bitcoin/bitcoin/raw/master/depends/packages/db48/db-4.8.30.NC.tar.gz
           tar -xf db-4.8.30.NC.tar.gz
           cd db-4.8.30.NC/build_unix
+          # Apply patch for Windows cross-compile
+          wget -q https://raw.githubusercontent.com/bitcoin/bitcoin/master/depends/packages/db48/db-4.8-windows.patch
+          patch -p1 < db-4.8-windows.patch
           ../dist/configure --enable-cxx --disable-shared --with-pic --host=x86_64-w64-mingw32 --prefix=$PREFIX
-          patch -p1 < path/to/sys_uio_windows.patch
           make -j$(nproc)
           make install
           cd ../../../..
