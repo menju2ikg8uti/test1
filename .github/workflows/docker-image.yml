@@ -9,8 +9,6 @@ on:
 jobs:
   build-windows:
     runs-on: ubuntu-latest
-    env:
-      PREFIX: ${{ github.workspace }}/depends/x86_64-w64-mingw32
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -30,8 +28,6 @@ jobs:
 
       - name: Build depends
         run: |
-          git clone https://github.com/diabaths/Crionic-Coin.git depends-temp
-          cp -r depends-temp/depends/* depends/
           cd depends
           make HOST=x86_64-w64-mingw32 -j$(nproc)
           cd ..
