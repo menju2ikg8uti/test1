@@ -9,6 +9,8 @@ on:
 jobs:
   build-windows:
     runs-on: ubuntu-latest
+    env:
+      PREFIX: ${{ github.workspace }}/depends/x86_64-w64-mingw32
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
