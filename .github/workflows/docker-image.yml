@@ -1,0 +1,56 @@
+name: Build Crionic Core Windows
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: ubuntu-latest
+    env:
+      PREFIX: ${{ github.workspace }}/depends/x86_64-w64-mingw32
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++-mingw-w64-x86-64 autoconf automake libtool pkg-config make git
+          sudo apt-get install -y build-essential libboost-all-dev libssl-dev libdb-dev libdb++-dev
+          # Optional: Qt5 cross compile dependencies if GUI needed
+          sudo apt-get install -y qt5-default qtbase5-dev qttools5-dev-tools
+
+      - name: Setup cross-compile environment
+        run: |
+          export CC=x86_64-w64-mingw32-gcc
+          export CXX=x86_64-w64-mingw32-g++
+          export PATH=$PREFIX/bin:$PATH
+
+      - name: Build depends
+        run: |
+          cd depends
+          make HOST=x86_64-w64-mingw32 -j$(nproc)
+          cd ..
+
+      - name: Autogen & configure
+        run: |
+          ./autogen.sh
+          ./configure --disable-bench --disable-tests --disable-gui-tests --disable-zmq \
+                      --prefix=$PREFIX \
+                      CC=x86_64-w64-mingw32-gcc \
+                      CXX=x86_64-w64-mingw32-g++
+      
+      - name: Build Crionic Core
+        run: |
+          make -j$(nproc)
+
+      - name: Upload Windows binaries
+        uses: actions/upload-artifact@v3
+        with:
+          name: crionic-win64
+          path: |
+            src/qt/release/*.exe
+            src/qt/release/*.dll
