@@ -36,6 +36,7 @@ jobs:
           tar -xf db-4.8.30.NC.tar.gz
           cd db-4.8.30.NC/build_unix
           ../dist/configure --enable-cxx --disable-shared --with-pic --host=x86_64-w64-mingw32 --prefix=$PREFIX
+          patch -p1 < path/to/sys_uio_windows.patch
           make -j$(nproc)
           make install
           cd ../../../..
