@@ -29,17 +29,15 @@ jobs:
       - name: Build depends
         run: |
           PATH=$(echo "$PATH" | sed -e 's/:\/mnt.*//g')
-          cd depends
-          # make HOST=x86_64-w64-mingw32 -j$(nproc)
-          cd ..
 
       - name: Autogen
         run: ./autogen.sh
 
       - name: Configure
         run: |
-          ./configure --disable-bench --disable-tests --disable-gui-tests --disable-zmq \
+          ./configure --disable-bench --disable-tests --disable-zmq \
                       --prefix=$PREFIX \
+                      --host=x86_64-w64-mingw32 \
                       CC=x86_64-w64-mingw32-gcc \
                       CXX=x86_64-w64-mingw32-g++
 
