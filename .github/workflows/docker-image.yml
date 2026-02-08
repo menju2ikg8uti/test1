@@ -15,12 +15,12 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y g++-mingw-w64-x86-64 autoconf automake libtool pkg-config make git bsdmainutils wget patch
+          sudo apt-get install -y g++-mingw-w64-x86-64 autoconf automake libtool pkg-config make git bsdmainutils
           sudo apt-get install -y build-essential libboost-all-dev libssl-dev libdb-dev libdb++-dev
-          sudo apt-get install -y qtbase5-dev qttools5-dev-tools
+          sudo apt-get install -y qtbase5-dev qttools5-dev-tools wget
 
       - name: Setup cross-compile environment
         run: |
@@ -28,20 +28,13 @@ jobs:
           export CXX=x86_64-w64-mingw32-g++
           export PATH=$PREFIX/bin:$PATH
 
-      - name: Build patched Berkeley DB 4.8
+      - name: Download prebuilt Windows DB4.8
         run: |
-          mkdir -p depends/db_cxx
-          cd depends/db_cxx
-          wget -q https://github.com/bitcoin/bitcoin/raw/master/depends/packages/db48/db-4.8.30.NC.tar.gz
-          tar -xf db-4.8.30.NC.tar.gz
-          cd db-4.8.30.NC/build_unix
-          # Apply patch for Windows cross-compile
-          wget -q https://raw.githubusercontent.com/bitcoin/bitcoin/master/depends/packages/db48/db-4.8-windows.patch
-          patch -p1 < db-4.8-windows.patch
-          ../dist/configure --enable-cxx --disable-shared --with-pic --host=x86_64-w64-mingw32 --prefix=$PREFIX
-          make -j$(nproc)
-          make install
-          cd ../../../..
+          mkdir -p $PREFIX
+          cd $PREFIX
+          wget -q https://github.com/bitcoin/bitcoin/raw/master/contrib/depends/packages/db-4.8.30.NC-x86_64-w64-mingw32.tar.gz
+          tar -xzf db-4.8.30.NC-x86_64-w64-mingw32.tar.gz
+          cd ../../..
 
       - name: Build depends
         run: |
@@ -49,16 +42,18 @@ jobs:
           make HOST=x86_64-w64-mingw32 -j$(nproc)
           cd ..
 
-      - name: Autogen
+      - name: Run autogen
         run: ./autogen.sh
 
       - name: Configure Crionic Core
         run: |
-          ./configure --disable-bench --disable-tests --disable-gui-tests --disable-zmq \
+          ./configure --disable-bench --disable-tests --disable-zmq \
                       --prefix=$PREFIX \
                       --host=x86_64-w64-mingw32 \
                       CC=x86_64-w64-mingw32-gcc \
-                      CXX=x86_64-w64-mingw32-g++
+                      CXX=x86_64-w64-mingw32-g++ \
+                      BDB_INCLUDE_PATH=$PREFIX/include \
+                      BDB_LIB_PATH=$PREFIX/lib
 
       - name: Build Crionic Core
         run: |
